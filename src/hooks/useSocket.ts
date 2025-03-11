@@ -34,7 +34,7 @@ export const useSocket = (username: string) => {
 
 
     useEffect(()=>{
-        const socketIo = io("http://localhost:8080",{
+        const socketIo = io("http://localhost:5000",{
             transports:["websocket", "polling"]
         });
 

@@ -47,6 +47,6 @@ io.on("connection", (socket) => {
 });
 
 
-httpServer.listen(8080, () => {
-    console.log("> WebSocket Server running on http://localhost:8080");
+httpServer.listen(5000, () => {
+    console.log("> WebSocket Server running on http://localhost:5000");
 });
