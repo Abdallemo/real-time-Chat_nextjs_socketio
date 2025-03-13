@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import * as schema from './schema'
 import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool,Client } from "pg";
+import pg from "pg";
 
+const { Pool,Client } = pg
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL!,
 });

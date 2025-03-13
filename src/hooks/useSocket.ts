@@ -60,7 +60,7 @@ export const useSocket = (username: string) => {
   
 
         socketIo.on('update users', (updatedUsers: string[]) => {
-            setUsers((prev)=>[...prev,...updatedUsers]);
+            setUsers(updatedUsers);
         });
         socketIo.on('user joined', (joinedUsername: string) => {
             addSystemMessage(`${joinedUsername} has joined the chat.`);

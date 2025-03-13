@@ -1,9 +1,9 @@
+
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import db, { client } from "../drizzle/indexJava.js";
-import { messages } from "../drizzle/schema.js";
- 
+import { db, client } from "../drizzle/client";
+import { messages } from "../drizzle/schema"; 
 
 const app = express();
 const httpServer = createServer(app);
@@ -38,7 +38,7 @@ client.on("notification", (msg) => {
   console.log("📩 Database Update Received:", msg.payload);
 
   
-  io.emit("chat message", JSON.parse(msg.payload));
+  io.emit("chat message", JSON.parse(msg.payload!));
 });
 
 io.on("connection", async (socket) => {
@@ -73,9 +73,9 @@ io.on("connection", async (socket) => {
   });
 });
 
-async function insert(msg) {
+async function insert(msg:typeof messages.$inferInsert) {
   //* so i destruct it
-  const { id, user, text, timestamp, system } = msg;
+  const { id, user, text, system } = msg;
   try {
     console.warn("about to insert to db");
     console.warn("data before inserting to db");
@@ -87,7 +87,7 @@ async function insert(msg) {
         id,
         user,
         text,
-        timestamp: new Date(timestamp),
+        timestamp: new Date(),
         system,
       })
       .returning();
@@ -105,3 +105,5 @@ async function insert(msg) {
 httpServer.listen(5000, () => {
   console.log("> WebSocket Server running on http://localhost:5000");
 });
+
+export {};

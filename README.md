@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Realtime Updates with Next.js, Express, and Socket.io
 
-## Getting Started
+## Overview
+I integrated **Socket.io** into a **Next.js** project while keeping everything in a single repository. Instead of creating a separate backend, I structured the project with a dedicated `server.ts` inside a `socket-server` folder, handling real-time updates via **Express** and **Socket.io**.  
 
-First, run the development server:
+The goal was to enable real-time communication for features like chat messages while keeping the rest of the Next.js app fully functional.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How I Set It Up
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Express & HTTP Server in Next.js**  
+   - Instead of creating a separate backend, I used Express inside a `server.ts` file.
+   - Wrapped Express inside an HTTP server to initialize **Socket.io**.
+   - Allowed CORS for `localhost:3000` since Next.js runs on that port.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Socket.io for Realtime Updates**  
+   - Used `io.on("connection")` to listen for new clients.
+   - Emitted and listened to events like `"chat message"` for updates.
+   - Implemented database-triggered real-time updates using PostgreSQL's **LISTEN/NOTIFY** with **Drizzle ORM**.
 
-## Learn More
+3. **Database Integration with Drizzle ORM**  
+   - Used **PostgreSQL LISTEN/NOTIFY** to detect and emit changes.
+   - On `INSERT`, a message was sent to all connected clients via `io.emit("chat message", msg)`.
+   - Connected the database client once and started listening for updates.
 
-To learn more about Next.js, take a look at the following resources:
+4. **Next.js Client Integration**  
+   - Used the `socket.io-client` package in the frontend.
+   - Connected to the WebSocket server via `io("http://localhost:5000")`.
+   - Used React's `useEffect` to manage connections and send user-related data.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## What I Learned
 
-## Deploy on Vercel
+- **Using `ts-node-esm` was problematic**  
+  - Initially used `ts-node-esm` for running `server.ts`, but it caused issues with `.ts` file extensions.
+  - Switching to **`tsx`** fixed the problem and provided better performance.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Keeping everything in one Next.js project is possible**  
+  - I didn’t need a separate backend.
+  - Running `next dev` and `tsx server.ts` together using **concurrently** worked perfectly.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **PostgreSQL’s LISTEN/NOTIFY is great for real-time updates**  
+  - Instead of constantly querying the database, I made PostgreSQL **push updates** whenever a message was inserted.
+  - This minimized unnecessary database calls and improved performance.
+
+- **Socket.io works well inside Next.js when handled separately**  
+  - Instead of trying to use API routes (`/api/socket`), keeping the WebSocket server outside of Next.js in `server.ts` made things cleaner.
+
+---
+
+## How I Ran Everything
+
+I used `concurrently` to run both Next.js and the WebSocket server:
+
+```sh
+"devStart": "concurrently -n \"NEXT,EXPRESS\" -c \"blue,green\" \"next dev\" \"tsx socket-server/server.ts\""
