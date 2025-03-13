@@ -49,11 +49,18 @@ export const useSocket = (username: string) => {
         })
 
         socketIo.on('chat message',(msg:Message)=>{
+            console.log(msg)
             setMessage((prev)=>[...prev,msg]);
+
         });
+        socketIo.on("all messages", (allMessages: Message[]) => {
+          console.log("Fetched messages:", allMessages);
+          setMessage((prev)=>[...allMessages,...prev]);
+      });
+  
 
         socketIo.on('update users', (updatedUsers: string[]) => {
-            setUsers(updatedUsers);
+            setUsers((prev)=>[...prev,...updatedUsers]);
         });
         socketIo.on('user joined', (joinedUsername: string) => {
             addSystemMessage(`${joinedUsername} has joined the chat.`);

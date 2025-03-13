@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSocket } from '@/hooks/useSocket';
 import ChatMessage from './ChatMessage';
 import OnlineUsers from './OnlineUsers';
+import LoaderSpinner from './ladoingbars';
 
 interface ChatInterfaceProps {
   username: string;
@@ -33,7 +34,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ username }) => {
         </div>
         <div className="mb-4 h-64 overflow-y-auto border border-gray-300 rounded p-2">
           {messages.map((msg) => (
-            <ChatMessage key={msg.id} message={msg} isOwnMessage={msg.user === username} />
+            <Suspense key={msg.id} fallback={<LoaderSpinner/>}>
+              <ChatMessage key={msg.id} message={msg} isOwnMessage={msg.user === username} />
+            </Suspense>
           ))}
           <div ref={messagesEndRef} />
         </div>
