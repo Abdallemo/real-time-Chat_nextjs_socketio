@@ -72,14 +72,19 @@ io.on("connection", async (socket) => {
 
   socket.on("user joined", (username) => {
     console.log(username, "joined");
+    socket.emit("user joined",username)
 
     users.set(socket.id, username); 
     socket.join("globalRoom"); 
+
+    io.to("globalRoom").emit("user joined", username);
 
     const usernames = Array.from(users.values()); 
     console.log("Updated users (server):", usernames);
     io.to("globalRoom").emit("update users", usernames);
   });
+
+  
   try {
     //! Might cause a problem
     if(db){
@@ -102,12 +107,16 @@ io.on("connection", async (socket) => {
     // io.to(msg.roomId || "globalRoom").emit("chat message", msg); 
   });
 
+
   socket.on("disconnect", () => {
     console.log("A client disconnected:", socket.id);
   
     const username = users.get(socket.id);
+
+    io.to("globalRoom").emit("user left", username);
+
     users.delete(socket.id); 
-    socket.leave("globalRoom"); // Remove from the room
+    socket.leave("globalRoom"); 
 
     const usernames = Array.from(users.values());
     console.log("Updated users (server):", usernames);

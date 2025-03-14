@@ -1,6 +1,6 @@
 "use client"
 import 'dotenv/config';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -22,7 +22,21 @@ export interface Message {
     const [isConnected, setIsConnected] = useState<boolean>(false);
     const [messages, setMessage] = useState<Message[]>([]);
     const [users, setUsers] = useState<string[]>([]);
-    
+
+    const addSystemMessage = useCallback((text: string, roomId?: string) => {
+      setMessage((prevMessages) => [
+        ...prevMessages,
+        {
+          id: uuidv4(),
+          user: 'System',
+          text,
+          timestamp: new Date(),
+          roomId,
+          system: true,
+        },
+      ]);
+    }, []);
+
     useEffect(() => {
       const socketIo = io(`http://localhost:${PORT}`, {
         transports: ["websocket", "polling"],
@@ -53,6 +67,17 @@ export interface Message {
         console.log("Updated users (client):", updatedUsers);
         setUsers(updatedUsers);
       });
+
+      socketIo.on('user joined', (joinedUsername: string) => {
+        console.log(`${joinedUsername} has joined the chat.`);
+        addSystemMessage(`${joinedUsername} has joined the chat.`);
+      });
+  
+      socketIo.on('user left', (leftUsername: string) => {
+        console.log(`${leftUsername} has left the chat.`);
+        addSystemMessage(`${leftUsername} has left the chat.`);
+      });
+  
   
       setSocket(socketIo);
       return () => {
