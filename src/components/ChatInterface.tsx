@@ -8,7 +8,7 @@ interface ChatInterfaceProps {
   username: string;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ username }) => {
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ username }) => {
   const { isConnected, messages, sendMessage, users } = useSocket(username);
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -27,6 +27,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ username }) => {
 
   return (
     <div className="flex w-full max-w-4xl bg-white rounded-lg shadow-md p-6">
+      <div className='bg-amber-100 w-[20]' ></div>
       <div className="flex-grow mr-4">
         <h1 className="text-2xl font-bold mb-4">WebSocket Chat Demo</h1>
         <div className={`mb-4 ${isConnected ? 'text-green-500' : 'text-red-500'}`}>
@@ -61,5 +62,3 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ username }) => {
     </div>
   );
 };
-
-export default ChatInterface;

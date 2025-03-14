@@ -1,9 +1,21 @@
 import { relations } from "drizzle-orm";
 import {pgTable, uuid, varchar, boolean, timestamp} from "drizzle-orm/pg-core";
+import { createInsertSchema } from 'drizzle-zod';
+import {z} from 'zod'
+
 
 export const UserTable = pgTable('User',{
   id:uuid('id').primaryKey().defaultRandom(),
-  name:varchar('name').notNull().unique()
+  name:varchar('name').notNull().unique(),
+  password:varchar('password').notNull()
+})
+
+export const userSchema = createInsertSchema(UserTable).pick({
+  name:true,
+  password:true,
+}).extend({
+  name: z.string().min(3,{message:'username must be more then 3'}),
+  password: z.string().min(4,{message:'password must be more then 4'})
 })
 
 

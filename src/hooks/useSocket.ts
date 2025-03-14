@@ -1,7 +1,9 @@
 "use client"
+import 'dotenv/config';
 import { useCallback, useEffect, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
+
 
 export interface Message {
     id: string;
@@ -11,6 +13,9 @@ export interface Message {
     roomId?: string;
     system:boolean
   }
+  const PORT = process.env.NEXT_PUBLIC_SOCKET_IO_URL_PORT
+
+
 
 export const useSocket = (username: string) => {
     const [socket,setSocket] = useState<Socket | null>(null)
@@ -32,11 +37,12 @@ export const useSocket = (username: string) => {
         ]);
       }, []);
 
-
+      
     useEffect(()=>{
-        const socketIo = io("http://localhost:5000",{
+        const socketIo = io(`http://localhost:${PORT}`,{
             transports:["websocket", "polling"]
         });
+        console.log(`PORT ${PORT}`)
 
         socketIo.on('connect',()=>{
             setIsConnected(true);

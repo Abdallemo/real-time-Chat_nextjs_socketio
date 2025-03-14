@@ -1,11 +1,14 @@
 
+import 'dotenv/config';
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { db, client } from "../drizzle/client";
 import { messages } from "../drizzle/schema"; 
 
+
 const app = express();
+const PORT = process.env.SOKECT_IO_URL_PORT
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
@@ -24,14 +27,19 @@ io.engine.on("connection_error", (err) => {
     context: err.context,
   });
 });
-
-client
-  .connect()
-  .then(() => {
+async function connectToDatabase() {
+  try {
+    await client.connect();
     console.log("✅ Database client connected, listening for updates...");
     client.query("LISTEN chat_updates");
-  })
-  .catch((err) => console.error("❌ Error connecting client:", err));
+  } catch (err) {
+    console.error("❌ Error connecting client:", err);
+    setTimeout(connectToDatabase, 5000); 
+  }
+}
+
+connectToDatabase();
+
 
 
 client.on("notification", (msg) => {
@@ -40,6 +48,11 @@ client.on("notification", (msg) => {
   
   io.emit("chat message", JSON.parse(msg.payload!));
 });
+client.on("error",(error)=>{
+  console.error("❌ Database client error:", error);
+  client.end();
+ 
+})
 
 io.on("connection", async (socket) => {
   console.log("A client connected");
@@ -101,9 +114,8 @@ async function insert(msg:typeof messages.$inferInsert) {
   }
 }
 
-
-httpServer.listen(5000, () => {
-  console.log("> WebSocket Server running on http://localhost:5000");
+httpServer.listen(PORT, () => {
+  console.log(`> WebSocket Server running on http://localhost:${PORT}`);
 });
 
 export {};
