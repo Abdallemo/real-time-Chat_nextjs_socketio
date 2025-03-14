@@ -7,6 +7,7 @@ interface OnlineUsersProps {
 }
 
 const OnlineUsers: React.FC<OnlineUsersProps> = ({ users, currentUser }) => {
+  console.log("OnlineUsers props:", { users, currentUser }); 
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b">

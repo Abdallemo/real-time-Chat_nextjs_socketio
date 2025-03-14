@@ -8,13 +8,16 @@ import { messages } from "../drizzle/schema";
 
 
 const app = express();
-const PORT = process.env.SOKECT_IO_URL_PORT
+const PORT = process.env.SOCKET_IO_URL_PORT
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
   },
+  connectTimeout:70000,
+  pingTimeout:60000,
+  pingInterval:25000
 });
 
 const users = new Map();
@@ -31,10 +34,19 @@ async function connectToDatabase() {
   try {
     await client.connect();
     console.log("✅ Database client connected, listening for updates...");
-    client.query("LISTEN chat_updates");
+    await client.query("LISTEN chat_updates").catch(console.error);
+    setInterval(async () => {
+      try {
+        await client.query("SELECT 1");
+      } catch (err) {
+        console.error("❌ Keep-alive query failed:", err);
+        await connectToDatabase(); 
+      }
+    }, 30000);
+
   } catch (err) {
     console.error("❌ Error connecting client:", err);
-    setTimeout(connectToDatabase, 5000); 
+    setTimeout(connectToDatabase, 5000);
   }
 }
 
@@ -48,6 +60,7 @@ client.on("notification", (msg) => {
   
   io.emit("chat message", JSON.parse(msg.payload!));
 });
+
 client.on("error",(error)=>{
   console.error("❌ Database client error:", error);
   client.end();
@@ -55,35 +68,47 @@ client.on("error",(error)=>{
 })
 
 io.on("connection", async (socket) => {
-  console.log("A client connected");
+  console.log("A client connected",socket.id);
   try {
-    const allMessages = await db.select().from(messages);
-    socket.emit("all messages", allMessages);
+    //! Might cause a problem
+    if(db){
+
+      const allMessages = await db.select().from(messages);
+      socket.emit("all messages", allMessages);
+    }
   } catch (error) {
     console.error("❌ Error fetching messages:", error);
   }
 
 
   socket.on("user joined", (username) => {
-    console.log(username);
-    users.set(socket.id, username);
-    io.emit("user joined", username);
-    io.emit("update users", Array.from(users.values()));
+    console.log(username, "joined");
+  
+    users.set(socket.id, username); 
+  
+    const usernames = Array.from(users.values()); 
+    console.log("Updated users (server):", usernames);
+  
+    io.emit("update users", usernames);
   });
 
   socket.on("chat message", (msg) => {
     console.log(msg);
     insert(msg);
+    // io.emit("chat message", msg);
   });
 
   socket.on("disconnect", () => {
-    const username = users.get(socket.id);
-    if (username) {
-      io.emit("user left", username);
-      users.delete(socket.id);
-      io.emit("update users", Array.from(users.values()));
-    }
+    console.log("A client disconnected:", socket.id);
+  
+    users.delete(socket.id); 
+    const usernames = Array.from(users.values());
+    console.log("Updated users (server):", usernames);
+  
+    io.emit("update users", usernames);
   });
+
+
 });
 
 async function insert(msg:typeof messages.$inferInsert) {

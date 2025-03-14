@@ -7,16 +7,17 @@ import { userSchema } from '../../../drizzle/schema';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useFormStatus } from 'react-dom';
-import  {signIn}  from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import { CreateUser } from '@/lib/action';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 export type userSchema = z.infer<typeof userSchema>
 
 export default function LoginForm() {
-    const router  = useRouter()
-                
+    const router = useRouter()
+
     const form = useForm<userSchema>({
         resolver: zodResolver(userSchema),
         defaultValues: {
@@ -24,44 +25,48 @@ export default function LoginForm() {
             password: ''
         }
     })
-    const { pending } = useFormStatus()
+    const [isLoading1, setIsLoading1] = useState(false);
+    const [isLoading2, setIsLoading2] = useState(false);
 
     async function Sign_In(values: userSchema) {
+        setIsLoading1(true);
         try {
-          const respone = await signIn('credentials',{name:values.name,password:values.password,redirect:false})
+            const response = await signIn('credentials', { name: values.name, password: values.password, redirect: false })
 
 
-            if (respone?.error) {
-                toast.error('Login Failed',{description:'Invalid credentials, please sign in',richColors:true})
-            }else{
-                toast.success('Login Succeed',{richColors:true,cancel:true})
+            if (response?.error) {
+                toast.error('Login Failed', { description: 'Invalid credentials, please sign in', richColors: true })
+            } else {
+                toast.success('Login Succeed', { richColors: true, cancel: true })
                 router.push('/')
             }
 
-    
+
         } catch (error) {
-            toast(`${error}`,{className:'sonner-spinner'})
+            toast(`${error}`, { className: 'sonner-spinner' })
         }
+        setIsLoading1(false);
 
     }
     async function Sign_Up(values: userSchema) {
+        setIsLoading2(true);
         try {
-          const respone = await CreateUser(values.name,values.password)
-            
+            const response = await CreateUser(values.name, values.password)
 
-            if (respone.status=='error') {
-                toast.error('Sign-Up Failed',{description:respone.error,richColors:true})
-            }else{
-                toast.success('Sign-Up Succeed',{richColors:true,cancel:true})
+
+            if (response.status == 'error') {
+                toast.error('Sign-Up Failed', { description: response.error, richColors: true })
+            } else {
+                toast.success('Sign-Up Succeed', { richColors: true, cancel: true })
                 router.push('/')
-                
+
             }
 
-    
-        } catch (error) {
-            toast(`${error}`,{className:'sonner-spinner',})
-        }
 
+        } catch (error) {
+            toast(`${error}`, { className: 'sonner-spinner', })
+        }
+        setIsLoading2(false);
     }
     return (
         <Form {...form} >
@@ -90,8 +95,8 @@ export default function LoginForm() {
                         <FormMessage />
                     </FormItem>
                 )} />
-                <Button disabled={pending} type='submit'>{pending ? 'submiting...' : 'Sign-in'}</Button>
-                <Button disabled={pending} onClick={form.handleSubmit(Sign_Up)}>{pending ? 'submiting...' : 'Sign-up'}</Button>
+                <Button disabled={isLoading1 || isLoading2} type='submit'>{isLoading1 ? <Loader2 className='animate-spin' /> : 'Sign-in'}</Button>
+                <Button disabled={isLoading2 || isLoading1} onClick={form.handleSubmit(Sign_Up)}>{isLoading2 ? <Loader2 className='animate-spin' /> : 'Sign-up'}</Button>
             </form>
         </Form>
     )

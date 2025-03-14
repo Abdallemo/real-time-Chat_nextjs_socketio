@@ -2,7 +2,7 @@
 import { userSchema } from "@/app/login/loginForm";
 import { db } from "../../drizzle/client";
 import { UserTable } from "../../drizzle/schema";
-import { signIn } from "@/auth"
+import { signIn ,signOut} from "@/auth"
 
 type CreateUserResponse =
     | { status: "success" }
@@ -59,6 +59,9 @@ export async function SignUpWithCridential(formData: userSchema) {
     }
 }
 
+export  const singOutAction = async () => {
+    await signOut({ redirectTo: '/login' });
+}
 export async function GetUserFromDb(name: string, password: string) {
     try {
         const result = await db.query.UserTable.findFirst({

@@ -6,15 +6,16 @@ import OnlineUsers from "@/components/OnlineUsers"
 import { LoaderSpinner } from "@/components/ladoingbars"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send } from "lucide-react"
+import {  Send } from "lucide-react"
 import { useSocket } from "@/hooks/useSocket"
+import { singOutAction } from "@/lib/action"
 
 
 export default function ChatApp({username}:{username:string}) {
 
   const { isConnected, messages, sendMessage, users } = useSocket(username);
 
-
+console.log('from home.tsx users',users)
   const [inputMessage, setInputMessage] = useState("")
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -28,13 +29,13 @@ export default function ChatApp({username}:{username:string}) {
   }
 
   useEffect(() => {
-    // Scroll to bottom when messages change
+    
     messagesEndRef.current?.scrollIntoView!({ behavior: "smooth" })
   }, [messages])
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {/* Navigation Bar */}
+      
       <header className="bg-primary text-primary-foreground py-4 px-6 shadow-md">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold">WebSocket Chat Demo</h1>
@@ -45,6 +46,10 @@ export default function ChatApp({username}:{username:string}) {
             </div>
             <div className="font-medium">Logged in as: {username}</div>
           </div>
+          
+            <Button variant={"secondary"} className="ml-10" onClick={singOutAction}>
+            SignOut
+            </Button>
         </div>
       </header>
 
@@ -55,7 +60,7 @@ export default function ChatApp({username}:{username:string}) {
           <div className="flex-1 overflow-y-auto p-4">
             <div className="space-y-2">
               {messages.map((msg) => (
-                <Suspense key={msg.id} fallback={<LoaderSpinner />}>
+                <Suspense key={msg.user} fallback={<LoaderSpinner />}>
                   <ChatMessage message={msg} isOwnMessage={msg.user === username} />
                 </Suspense>
               ))}
