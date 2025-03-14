@@ -68,7 +68,18 @@ client.on("error",(error)=>{
 })
 
 io.on("connection", async (socket) => {
-  console.log("A client connected",socket.id);
+  console.log("A client connected", socket.id);
+
+  socket.on("user joined", (username) => {
+    console.log(username, "joined");
+
+    users.set(socket.id, username); 
+    socket.join("globalRoom"); 
+
+    const usernames = Array.from(users.values()); 
+    console.log("Updated users (server):", usernames);
+    io.to("globalRoom").emit("update users", usernames);
+  });
   try {
     //! Might cause a problem
     if(db){
@@ -80,36 +91,30 @@ io.on("connection", async (socket) => {
     console.error("❌ Error fetching messages:", error);
   }
 
-
-  socket.on("user joined", (username) => {
-    console.log(username, "joined");
-  
-    users.set(socket.id, username); 
-  
-    const usernames = Array.from(users.values()); 
-    console.log("Updated users (server):", usernames);
-  
-    io.emit("update users", usernames);
+  socket.on("join room", (roomId) => {
+    socket.join(roomId);
+    console.log(`${users.get(socket.id)} joined room: ${roomId}`);
   });
 
   socket.on("chat message", (msg) => {
     console.log(msg);
     insert(msg);
-    // io.emit("chat message", msg);
+    // io.to(msg.roomId || "globalRoom").emit("chat message", msg); 
   });
 
   socket.on("disconnect", () => {
     console.log("A client disconnected:", socket.id);
   
+    const username = users.get(socket.id);
     users.delete(socket.id); 
+    socket.leave("globalRoom"); // Remove from the room
+
     const usernames = Array.from(users.values());
     console.log("Updated users (server):", usernames);
-  
-    io.emit("update users", usernames);
+    io.to("globalRoom").emit("update users", usernames);
   });
-
-
 });
+
 
 async function insert(msg:typeof messages.$inferInsert) {
   //* so i destruct it

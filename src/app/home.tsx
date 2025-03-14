@@ -60,7 +60,7 @@ console.log('from home.tsx users',users)
           <div className="flex-1 overflow-y-auto p-4">
             <div className="space-y-2">
               {messages.map((msg) => (
-                <Suspense key={msg.user} fallback={<LoaderSpinner />}>
+                <Suspense key={msg.id} fallback={<LoaderSpinner />}>
                   <ChatMessage message={msg} isOwnMessage={msg.user === username} />
                 </Suspense>
               ))}

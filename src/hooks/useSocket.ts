@@ -1,6 +1,6 @@
 "use client"
 import 'dotenv/config';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -22,39 +22,24 @@ export interface Message {
     const [isConnected, setIsConnected] = useState<boolean>(false);
     const [messages, setMessage] = useState<Message[]>([]);
     const [users, setUsers] = useState<string[]>([]);
-  
-    const addSystemMessage = useCallback((text: string, roomId?: string) => {
-      setMessage((prevMessages) => [
-        ...prevMessages,
-        {
-          id: uuidv4(),
-          user: 'System',
-          text,
-          timestamp: new Date(),
-          roomId,
-          system: true,
-        },
-      ]);
-    }, []);
-  
+    
     useEffect(() => {
       const socketIo = io(`http://localhost:${PORT}`, {
         transports: ["websocket", "polling"],
       });
-      console.log(`PORT ${PORT}`);
   
-      socketIo.on('connect', () => {
+      socketIo.on("connect", () => {
         console.log("Socket connected");
         setIsConnected(true);
-        socketIo.emit('user joined', username);
+        socketIo.emit("user joined", username);
       });
   
-      socketIo.on('disconnect', () => {
+      socketIo.on("disconnect", () => {
         console.log("Socket disconnected");
         setIsConnected(false);
       });
   
-      socketIo.on('chat message', (msg: Message) => {
+      socketIo.on("chat message", (msg: Message) => {
         console.log("Chat message received:", msg);
         setMessage((prev) => [...prev, msg]);
       });
@@ -64,26 +49,16 @@ export interface Message {
         setMessage((prev) => [...allMessages, ...prev]);
       });
   
-      socketIo.on('update users', (updatedUsers: string[]) => {
-        console.log("Updated users (client):", updatedUsers); 
+      socketIo.on("update users", (updatedUsers: string[]) => {
+        console.log("Updated users (client):", updatedUsers);
         setUsers(updatedUsers);
-      });
-  
-      socketIo.on('user joined', (joinedUsername: string) => {
-        console.log(`${joinedUsername} has joined the chat.`);
-        addSystemMessage(`${joinedUsername} has joined the chat.`);
-      });
-  
-      socketIo.on('user left', (leftUsername: string) => {
-        console.log(`${leftUsername} has left the chat.`);
-        addSystemMessage(`${leftUsername} has left the chat.`);
       });
   
       setSocket(socketIo);
       return () => {
         socketIo.disconnect();
       };
-    }, [username, addSystemMessage]);
+    }, [username]);
   
     const sendMessage = (text: string, roomId?: string) => {
       if (socket) {
@@ -95,9 +70,16 @@ export interface Message {
           roomId,
           system: false,
         };
-        socket.emit('chat message', message);
+        socket.emit("chat message", message);
       }
     };
   
-    return { isConnected, messages, sendMessage, users };
+    const joinRoom = (roomId: string) => {
+      if (socket) {
+        socket.emit("join room", roomId);
+      }
+    };
+  
+    return { isConnected, messages, sendMessage, users, joinRoom };
   };
+  
