@@ -21,7 +21,9 @@ const io = new Server(httpServer, {
 });
 
 const users = new Map();
-let message;
+let isReconnecting = false;
+
+
 io.engine.on("connection_error", (err) => {
   console.error("WebSocket Error:", {
     request: err.req,
@@ -31,21 +33,29 @@ io.engine.on("connection_error", (err) => {
   });
 });
 async function connectToDatabase() {
+  if(isReconnecting) return
+  isReconnecting = true;
+
   try {
+
     await client.connect();
     console.log("✅ Database client connected, listening for updates...");
     await client.query("LISTEN chat_updates").catch(console.error);
+
     setInterval(async () => {
+
       try {
         await client.query("SELECT 1");
       } catch (err) {
         console.error("❌ Keep-alive query failed:", err);
+        isReconnecting = false
         await connectToDatabase(); 
       }
     }, 30000);
 
   } catch (err) {
     console.error("❌ Error connecting client:", err);
+    isReconnecting = false;
     setTimeout(connectToDatabase, 5000);
   }
 }
@@ -63,7 +73,18 @@ client.on("notification", (msg) => {
 
 client.on("error",(error)=>{
   console.error("❌ Database client error:", error);
-  client.end();
+  try {
+    client.end();
+    
+  } catch (error) {
+    console.error("⚠️ Error closing database client:", error);
+    setTimeout(() => {
+      console.error('Reconnecting...')
+      connectToDatabase()
+      isReconnecting = false;
+    }, 5000);
+  }
+  
  
 })
 
@@ -72,17 +93,21 @@ io.on("connection", async (socket) => {
 
   socket.on("user joined", (username) => {
     console.log(username, "joined");
-    socket.emit("user joined",username)
+    if(!users.has(socket.id)){
+      socket.broadcast.emit("user joined",username)
+  
+      users.set(socket.id, username); 
+      socket.join("globalRoom"); 
+      // io.to("globalRoom").emit("user joined", username);
+      const usernames = Array.from(users.values()); 
 
-    users.set(socket.id, username); 
-    socket.join("globalRoom"); 
+      console.log("Updated users (server):", usernames);
+      io.to('globalRoom').emit('system message', `${username} has joined the chat.`);
+      io.to("globalRoom").emit("update users", usernames);
 
-    io.to("globalRoom").emit("user joined", username);
-
-    const usernames = Array.from(users.values()); 
-    console.log("Updated users (server):", usernames);
-    io.to("globalRoom").emit("update users", usernames);
+    }
   });
+ 
 
   
   try {
@@ -112,15 +137,17 @@ io.on("connection", async (socket) => {
     console.log("A client disconnected:", socket.id);
   
     const username = users.get(socket.id);
+    if(username){
 
-    io.to("globalRoom").emit("user left", username);
+      users.delete(socket.id); 
+      io.to("globalRoom").emit("user left", username);
+      //socket.leave("globalRoom"); 
+      const usernames = Array.from(users.values());
 
-    users.delete(socket.id); 
-    socket.leave("globalRoom"); 
-
-    const usernames = Array.from(users.values());
-    console.log("Updated users (server):", usernames);
-    io.to("globalRoom").emit("update users", usernames);
+      console.log("Updated users (server):", usernames);
+      io.to("globalRoom").emit("update users", usernames);
+      io.to('globalRoom').emit('system message', `${username} has left the chat.`);
+    }
   });
 });
 
@@ -133,7 +160,7 @@ async function insert(msg:typeof messages.$inferInsert) {
     console.warn("data before inserting to db");
     console.log(msg);
 
-    message = await db
+    const message = await db
       .insert(messages)
       .values({
         id,

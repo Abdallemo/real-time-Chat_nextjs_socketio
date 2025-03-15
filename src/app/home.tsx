@@ -6,36 +6,43 @@ import OnlineUsers from "@/components/OnlineUsers"
 import { LoaderSpinner } from "@/components/ladoingbars"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {  Send } from "lucide-react"
+import { Loader2, Send } from "lucide-react"
 import { useSocket } from "@/hooks/useSocket"
 import { singOutAction } from "@/lib/action"
 
 
-export default function ChatApp({username}:{username:string}) {
+export default function ChatApp({ username }: { username: string }) {
 
   const { isConnected, messages, sendMessage, users } = useSocket(username);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
-console.log('from home.tsx users',users)
+  console.log('from home.tsx users', users)
   const [inputMessage, setInputMessage] = useState("")
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const handleSubmit = (e:FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (inputMessage.trim() === "") return
     sendMessage(inputMessage);
     setInputMessage('')
-  
+
   }
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    await singOutAction();
+    setIsSigningOut(false);
+  };
 
   useEffect(() => {
-    
+
     messagesEndRef.current?.scrollIntoView!({ behavior: "smooth" })
   }, [messages])
 
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      
+
       <header className="bg-primary text-primary-foreground py-4 px-6 shadow-md">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold">WebSocket Chat Demo</h1>
@@ -46,10 +53,10 @@ console.log('from home.tsx users',users)
             </div>
             <div className="font-medium">Logged in as: {username}</div>
           </div>
-          
-            <Button variant={"secondary"} className="ml-10" onClick={singOutAction}>
-            SignOut
-            </Button>
+
+          <Button variant={"secondary"} className="ml-10" onClick={handleSignOut} disabled={isSigningOut}>
+            {isSigningOut ? <Loader2 className="animate-spin" /> : "Sign Out"}
+          </Button>
         </div>
       </header>
 

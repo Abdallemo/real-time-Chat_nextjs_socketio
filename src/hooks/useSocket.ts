@@ -1,6 +1,6 @@
 "use client"
 import 'dotenv/config';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -18,7 +18,9 @@ export interface Message {
 
 
   export const useSocket = (username: string) => {
-    const [socket, setSocket] = useState<Socket | null>(null);
+    //const [socket, setSocket] = useState<Socket | null>(null); socket Ref is better 
+    const socketRef = useRef<Socket|null>(null)
+
     const [isConnected, setIsConnected] = useState<boolean>(false);
     const [messages, setMessage] = useState<Message[]>([]);
     const [users, setUsers] = useState<string[]>([]);
@@ -38,55 +40,69 @@ export interface Message {
     }, []);
 
     useEffect(() => {
-      const socketIo = io(`http://localhost:${PORT}`, {
+      socketRef.current = io(`http://localhost:${PORT}`, {
         transports: ["websocket", "polling"],
+        reconnection:true,
+        reconnectionAttempts:5,
+        reconnectionDelay:1000
       });
   
-      socketIo.on("connect", () => {
+      const cleanupListeners = () => {
+         socketRef.current?.off("connect");
+         socketRef.current?.off("disconnect");
+         socketRef.current?.off("chat message");
+         socketRef.current?.off("all messages");
+         socketRef.current?.off("update users");
+         socketRef.current?.off("system message");
+      };  
+      cleanupListeners()
+
+      //* eh New listner
+      socketRef.current.on("connect", () => {
         console.log("Socket connected");
         setIsConnected(true);
-        socketIo.emit("user joined", username);
+        if(username){
+          socketRef.current?.emit("user joined", username);
+
+        }
       });
   
-      socketIo.on("disconnect", () => {
+      socketRef.current.on("disconnect", () => {
         console.log("Socket disconnected");
         setIsConnected(false);
       });
   
-      socketIo.on("chat message", (msg: Message) => {
+      socketRef.current.on("chat message", (msg: Message) => {
         console.log("Chat message received:", msg);
         setMessage((prev) => [...prev, msg]);
       });
   
-      socketIo.on("all messages", (allMessages: Message[]) => {
+      socketRef.current.on("all messages", (allMessages: Message[]) => {
         console.log("Fetched messages:", allMessages);
         setMessage((prev) => [...allMessages, ...prev]);
       });
   
-      socketIo.on("update users", (updatedUsers: string[]) => {
+      socketRef.current.on("update users", (updatedUsers: string[]) => {
         console.log("Updated users (client):", updatedUsers);
         setUsers(updatedUsers);
       });
 
-      socketIo.on('user joined', (joinedUsername: string) => {
-        console.log(`${joinedUsername} has joined the chat.`);
-        addSystemMessage(`${joinedUsername} has joined the chat.`);
+      socketRef.current.on('system message', (systemMessages: string) => {
+        console.log(systemMessages);
+        addSystemMessage(systemMessages);
       });
   
-      socketIo.on('user left', (leftUsername: string) => {
-        console.log(`${leftUsername} has left the chat.`);
-        addSystemMessage(`${leftUsername} has left the chat.`);
-      });
+      
   
-  
-      setSocket(socketIo);
+      
       return () => {
-        socketIo.disconnect();
+        socketRef.current?.disconnect();
+        socketRef.current = null
       };
-    }, [username]);
+    }, [username,addSystemMessage]);
   
     const sendMessage = (text: string, roomId?: string) => {
-      if (socket) {
+      if (socketRef.current) {
         const message: Message = {
           id: uuidv4(),
           user: username,
@@ -95,13 +111,13 @@ export interface Message {
           roomId,
           system: false,
         };
-        socket.emit("chat message", message);
+        socketRef.current.emit("chat message", message);
       }
     };
-  
+    //TODO not used yet
     const joinRoom = (roomId: string) => {
-      if (socket) {
-        socket.emit("join room", roomId);
+      if (socketRef.current) {
+        socketRef.current?.emit("join room", roomId);
       }
     };
   
