@@ -1,10 +1,10 @@
 
-import 'dotenv/config';
+import 'dotenv/config.js';
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { db, client } from "../drizzle/client";
-import { messages } from "../drizzle/schema"; 
+import { db, client } from "../drizzle/client.js";
+import { messages } from "./../drizzle/schema.js"; 
 
 
 const app = express();
@@ -68,7 +68,7 @@ client.on("notification", (msg) => {
   console.log("📩 Database Update Received:", msg.payload);
 
   
-  io.emit("chat message", JSON.parse(msg.payload!));
+  io.emit("chat message", JSON.parse(msg.payload));
 });
 
 client.on("error",(error)=>{
@@ -152,7 +152,7 @@ io.on("connection", async (socket) => {
 });
 
 
-async function insert(msg:typeof messages.$inferInsert) {
+async function insert(msg) {
   //* so i destruct it
   const { id, user, text, system } = msg;
   try {
