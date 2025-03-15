@@ -40,7 +40,7 @@ export interface Message {
     }, []);
 
     useEffect(() => {
-      socketRef.current = io(`http://localhost:${PORT}`, {
+      socketRef.current = io(`http://192.168.0.66:${PORT}`, {
         transports: ["websocket", "polling"],
         reconnection:true,
         reconnectionAttempts:5,
@@ -98,6 +98,7 @@ export interface Message {
       return () => {
         socketRef.current?.disconnect();
         socketRef.current = null
+        setMessage([])
       };
     }, [username,addSystemMessage]);
   

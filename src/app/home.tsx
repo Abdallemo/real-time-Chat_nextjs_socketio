@@ -6,9 +6,10 @@ import OnlineUsers from "@/components/OnlineUsers"
 import { LoaderSpinner } from "@/components/ladoingbars"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Send } from "lucide-react"
+import { Send } from "lucide-react"
 import { useSocket } from "@/hooks/useSocket"
 import { singOutAction } from "@/lib/action"
+import Header from "@/components/nav-bar"
 
 
 export default function ChatApp({ username }: { username: string }) {
@@ -41,28 +42,17 @@ export default function ChatApp({ username }: { username: string }) {
 
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <main className="">
 
-      <header className="bg-primary text-primary-foreground py-4 px-6 shadow-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-bold">WebSocket Chat Demo</h1>
-          <div className="flex items-center space-x-4">
-            <div className={`flex items-center ${isConnected ? "text-green-300" : "text-red-300"}`}>
-              <div className={`w-2 h-2 rounded-full mr-2 ${isConnected ? "bg-green-400" : "bg-red-400"}`}></div>
-              {isConnected ? "Connected" : "Disconnected"}
-            </div>
-            <div className="font-medium">Logged in as: {username}</div>
-          </div>
+      <Header handleSignOut={handleSignOut} username={username} isConnected={isConnected} isSigningOut={isSigningOut} onlineUsers={users.length}/>
 
-          <Button variant={"secondary"} className="ml-10" onClick={handleSignOut} disabled={isSigningOut}>
-            {isSigningOut ? <Loader2 className="animate-spin" /> : "Sign Out"}
-          </Button>
-        </div>
-      </header>
 
-      {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
+
+
+
         {/* Chat Area */}
+
         <div className="flex-1 flex flex-col max-w-4xl mx-auto">
           <div className="flex-1 overflow-y-auto p-4">
             <div className="space-y-2">
@@ -94,11 +84,13 @@ export default function ChatApp({ username }: { username: string }) {
         </div>
 
         {/* Online Users Sidebar */}
-        <div className="w-64 border-l bg-card hidden md:block">
+        <div className="w-64 border-l bg-card hidden md:block ">
           <OnlineUsers users={users} currentUser={username} />
         </div>
+
+
       </div>
-    </div>
+    </main>
   )
 }
 

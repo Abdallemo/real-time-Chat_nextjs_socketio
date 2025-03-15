@@ -8,11 +8,11 @@ import { messages } from "../drizzle/schema";
 
 
 const app = express();
-const PORT = process.env.SOCKET_IO_URL_PORT
+const PORT = Number(process.env.SOCKET_IO_URL_PORT)
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "*",
     methods: ["GET", "POST"],
   },
   connectTimeout:70000,
@@ -180,7 +180,7 @@ async function insert(msg:typeof messages.$inferInsert) {
   }
 }
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, "0.0.0.0",() => {
   console.log(`> WebSocket Server running on http://localhost:${PORT}`);
 });
 

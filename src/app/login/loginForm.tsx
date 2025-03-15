@@ -69,35 +69,38 @@ export default function LoginForm() {
         setIsLoading2(false);
     }
     return (
-        <Form {...form} >
-            <form onSubmit={form.handleSubmit(Sign_In)} className='flex flex-col gap-2 px-4 py-1'>
-                <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
+        <main>
+            <Form {...form} >
+                <form onSubmit={form.handleSubmit(Sign_In)} className='flex flex-col gap-2 px-4 py-1'>
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
 
+                            <FormItem>
+                                <FormLabel>Username</FormLabel>
+                                <FormControl>
+                                    <Input placeholder='Username' {...field} />
+                                </FormControl>
+                                <FormDescription>your name will be public</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField control={form.control} name='password' render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Username</FormLabel>
+                            <FormLabel>Password</FormLabel>
                             <FormControl>
-                                <Input placeholder='Username' {...field} />
+                                <Input placeholder='password' {...field} type='password' />
                             </FormControl>
-                            <FormDescription>your name will be public</FormDescription>
                             <FormMessage />
                         </FormItem>
-                    )}
-                />
-                <FormField control={form.control} name='password' render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                            <Input placeholder='password' {...field} type='password' />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-                <Button disabled={isLoading1 || isLoading2} type='submit'>{isLoading1 ? <Loader2 className='animate-spin' /> : 'Sign-in'}</Button>
-                <Button disabled={isLoading2 || isLoading1} onClick={form.handleSubmit(Sign_Up)}>{isLoading2 ? <Loader2 className='animate-spin' /> : 'Sign-up'}</Button>
-            </form>
-        </Form>
+                    )} />
+                    <Button disabled={isLoading1 || isLoading2} type='submit'>{isLoading1 ? <Loader2 className='animate-spin' /> : 'Sign-in'}</Button>
+                    <Button disabled={isLoading2 || isLoading1} onClick={form.handleSubmit(Sign_Up)}>{isLoading2 ? <Loader2 className='animate-spin' /> : 'Sign-up'}</Button>
+                </form>
+            </Form>
+
+        </main>
     )
 }
