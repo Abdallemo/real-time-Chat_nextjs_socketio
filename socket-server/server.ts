@@ -129,7 +129,6 @@ io.on("connection", async (socket) => {
   socket.on("chat message", (msg) => {
     console.log(msg);
     insert(msg);
-    // io.to(msg.roomId || "globalRoom").emit("chat message", msg); 
   });
 
 
