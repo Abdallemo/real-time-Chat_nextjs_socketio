@@ -2,6 +2,7 @@
 
 ## Overview
 I integrated **Socket.io** into a **Next.js** project while keeping everything in a single repository. Instead of creating a separate backend, I structured the project with a dedicated `server.ts` inside a `socket-server` folder, handling real-time updates via **Express** and **Socket.io**.  
+![Screenshot 2025-03-16 135820](https://github.com/user-attachments/assets/286ef46e-eeef-40b2-ae24-ad956ce83776)
 
 The goal was to enable real-time communication for features like chat messages while keeping the rest of the Next.js app fully functional.
 
