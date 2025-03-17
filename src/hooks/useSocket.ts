@@ -1,6 +1,6 @@
 "use client"
 import 'dotenv/config';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -25,19 +25,7 @@ export interface Message {
     const [messages, setMessage] = useState<Message[]>([]);
     const [users, setUsers] = useState<string[]>([]);
 
-    const addSystemMessage = useCallback((text: string, roomId?: string) => {
-      setMessage((prevMessages) => [
-        ...prevMessages,
-        {
-          id: uuidv4(),
-          user: 'System',
-          text,
-          timestamp: new Date(),
-          roomId,
-          system: true,
-        },
-      ]);
-    }, []);
+   
 
     useEffect(() => {
       socketRef.current = io(`http://192.168.0.66:${PORT}`, {
@@ -100,7 +88,7 @@ export interface Message {
         socketRef.current = null
         setMessage([])
       };
-    }, [username,addSystemMessage]);
+    }, [username,]);
   
     const sendMessage = (text: string, roomId?: string) => {
       if (socketRef.current) {
@@ -121,6 +109,19 @@ export interface Message {
         socketRef.current?.emit("join room", roomId);
       }
     };
+    const addSystemMessage = (text: string, roomId?: string) => {
+      setMessage((prevMessages) => [
+        ...prevMessages,
+        {
+          id: uuidv4(),
+          user: 'System',
+          text,
+          timestamp: new Date(),
+          roomId,
+          system: true,
+        },
+      ]);
+    } ;
   
     return { isConnected, messages, sendMessage, users, joinRoom };
   };
