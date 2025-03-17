@@ -5,13 +5,13 @@ import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 
 
-export interface Message {
+export type Message = {
     id: string;
     user: string;
     text: string;
     timestamp: Date;
     roomId?: string;
-    system:boolean
+    system:boolean;
   }
   const PORT = process.env.NEXT_PUBLIC_SOCKET_IO_URL_PORT
 
